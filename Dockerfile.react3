@@ -1,0 +1,40 @@
+FROM node:23-alpine3.20
+
+#RUN npm install -g create-react-app
+
+# https://docs.npmjs.com/try-the-latest-stable-version-of-npm
+# 
+#RUN npm install -g npm
+#RUN apk add --update npm
+
+RUN addgroup -g 1001 reactgroup && \
+    adduser -D -u 1001 -G reactgroup reactuser
+
+# Check here: https://www.npmjs.com/package/npm?activeTab=versions
+
+RUN npm config set prefix /home/reactuser/.npm-global
+RUN npm install -g npm@11.3.0 && \
+#    apk add dumb-init && \
+    apk add --no-cache bash && \
+    npm install -g create-vite && \
+    npm install -g vite
+
+# For later access by reactuser
+RUN mkdir -p /home/reactuser/.npm-global && \ 
+    chown -R 1001:1001 "/home/reactuser/.npm-global"
+
+WORKDIR /app
+
+USER reactuser
+
+RUN npm config set prefix /home/reactuser/.npm-global
+
+ENV PATH=/home/reactuser/.npm-global/bin:$PATH
+
+RUN echo "alias ll='ls -al'" >> /home/reactuser/.bashrc
+RUN echo "alias ..='cd ..'" >> /home/reactuser/.bashrc
+RUN echo "alias h='function _(){ if [ $# -eq 0 ]; then history; else history | grep --color $1; fi }; _'" >> /home/reactuser/.bashrc
+
+EXPOSE 5174
+
+CMD ["bash"]
